@@ -11,7 +11,7 @@ def inference(images, batch_size, n_classes):
         output tensor with the computed logits, float, [batch_size, n_classes]
     """
     #conv1, shape = [kernel size, kernel size, channels, kernel numbers]
-
+# 使用3*3的卷积核 3通道图像  第四个参数也代表出现使用多少个卷积特征图像 conv1 卷出16个特征值
     with tf.variable_scope('conv1') as scope:
         weights = tf.get_variable('weights',
                                   shape = [3,3,3, 16],
@@ -21,19 +21,26 @@ def inference(images, batch_size, n_classes):
                                  shape=[16],
                                  dtype=tf.float32,
                                  initializer=tf.constant_initializer(0.1))
-        conv = tf.nn.conv2d(images, weights, strides=[1,1,1,1], padding='SAME')
+        conv = tf.nn.conv2d(images, weights, strides=[1,1,1,1], padding='SAME')  #208*208*16
         pre_activation = tf.nn.bias_add(conv, biases)
+#         走一个relu函数 208*208*16
         conv1 = tf.nn.relu(pre_activation, name= scope.name)
+        print('conv1: ',conv1.shape)
 
     #pool1 and norm1
     with tf.variable_scope('pooling1_lrn') as scope:
+#         走一个max_pool
         pool1 = tf.nn.max_pool(conv1, ksize=[1,3,3,1],strides=[1,2,2,1],
                                padding='SAME', name='pooling1')
         norm1 = tf.nn.lrn(pool1, depth_radius=4, bias=1.0, alpha=0.001/9.0,
                           beta=0.75,name='norm1')
-
+        print('norm1: ',norm1.shape)
+        
+        
+        
     #conv2
     with tf.variable_scope('conv2') as scope:
+#         继续使用16通道卷积 卷积出16个特征
         weights = tf.get_variable('weights',
                                   shape=[3,3,16,16],
                                   dtype=tf.float32,
@@ -44,15 +51,19 @@ def inference(images, batch_size, n_classes):
                                  initializer=tf.constant_initializer(0.1))
         conv = tf.nn.conv2d(norm1, weights, strides=[1,1,1,1],padding='SAME')
         pre_activation = tf.nn.bias_add(conv, biases)
+#         再走一个relu
         conv2 = tf.nn.relu(pre_activation, name='conv2')
-
+        print('conv2: ',conv2.shape)
+        
     #pool2 and norm2
     with tf.variable_scope('pooling2_lrn') as scope:
         norm2 = tf.nn.lrn(conv2, depth_radius=4, bias=1.0, alpha=0.001/9.0,
                           beta=0.75,name='norm2')
         pool2 = tf.nn.max_pool(norm2, ksize=[1,3,3,1], strides=[1,1,1,1],
                                padding='SAME',name='pooling2')
-
+        print('pool2: ',pool2.shape)
+        
+        
     #local3
     with tf.variable_scope('local3') as scope:
         reshape = tf.reshape(pool2, shape=[batch_size, -1])
@@ -66,6 +77,7 @@ def inference(images, batch_size, n_classes):
                                  dtype=tf.float32,
                                  initializer=tf.constant_initializer(0.1))
         local3 = tf.nn.relu(tf.matmul(reshape, weights) + biases, name=scope.name)
+        print('local3: ',local3.shape)
 
     #local4
     with tf.variable_scope('local4') as scope:
@@ -78,6 +90,7 @@ def inference(images, batch_size, n_classes):
                                  dtype=tf.float32,
                                  initializer=tf.constant_initializer(0.1))
         local4 = tf.nn.relu(tf.matmul(local3, weights) + biases, name='local4')
+        print('local4: ',local4.shape)
 
 
     # softmax

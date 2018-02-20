@@ -82,12 +82,13 @@ def get_batch(image, label, image_W, image_H, batch_size, capacity):
     image_contents = tf.read_file(input_queue[0])
 #     得到图片的tensor形式
     image = tf.image.decode_jpeg(image_contents, channels=3)
-
+# resize 图片
     image = tf.image.resize_image_with_crop_or_pad(image, image_W, image_H)
 
     # if you want to test the generated batches of images, you might want to comment the following line.
     image = tf.image.per_image_standardization(image)
 
+#     多线程并行读入样本 从队列中读取数据 capacity 代表一次性读取多少  batch_size
     image_batch, label_batch = tf.train.batch([image, label],
                                                 batch_size= batch_size,
                                                 num_threads= 4,
@@ -95,5 +96,5 @@ def get_batch(image, label, image_W, image_H, batch_size, capacity):
 
     label_batch = tf.reshape(label_batch, [batch_size])
     image_batch = tf.cast(image_batch, tf.float32)
-
+#     返回一个batch的数据
     return image_batch, label_batch
