@@ -39,10 +39,13 @@ def training():
 
     #scale the float to -2.5 to 2.5
     #train_batch = (1/(2*2.25)) * train_batch + 0.5
-
+#     CNN卷积操作
     logits = model.inference(train_batch, BATCH_SIZE, N_CLASSES)
+#    损失函数
     loss = model.losses(logits, train_label_batch)
+#     梯度下降
     train_op = model.trainning(loss, learning_rate)
+#     准确率
     acc = model.evaluation(logits, train_label_batch)
 
     x = tf.placeholder(tf.float32, shape=[BATCH_SIZE, IMG_W, IMG_H, 3])
@@ -54,7 +57,7 @@ def training():
         sess.run(tf.global_variables_initializer())
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess= sess, coord=coord)
-
+#         tensorboard查看
         summary_op = tf.summary.merge_all()
         train_writer = tf.summary.FileWriter(train_logs_dir, sess.graph)
         val_writer = tf.summary.FileWriter(val_logs_dir, sess.graph)

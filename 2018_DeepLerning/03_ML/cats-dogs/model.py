@@ -29,12 +29,14 @@ def inference(images, batch_size, n_classes):
 
     #pool1 and norm1
     with tf.variable_scope('pooling1_lrn') as scope:
-#         走一个max_pool
+#         走一个max_pool  LRN(Local Response Normalization） 局部响应归一化
+
         pool1 = tf.nn.max_pool(conv1, ksize=[1,3,3,1],strides=[1,2,2,1],
                                padding='SAME', name='pooling1')
         norm1 = tf.nn.lrn(pool1, depth_radius=4, bias=1.0, alpha=0.001/9.0,
                           beta=0.75,name='norm1')
-        print('norm1: ',norm1.shape)
+#         走一个max_pool 出来 108*108*16  strides为2
+        print('norm1: ',norm1.shape)  
         
         
         
@@ -53,6 +55,7 @@ def inference(images, batch_size, n_classes):
         pre_activation = tf.nn.bias_add(conv, biases)
 #         再走一个relu
         conv2 = tf.nn.relu(pre_activation, name='conv2')
+#         出来104*104*16 strides为1
         print('conv2: ',conv2.shape)
         
     #pool2 and norm2
@@ -61,13 +64,22 @@ def inference(images, batch_size, n_classes):
                           beta=0.75,name='norm2')
         pool2 = tf.nn.max_pool(norm2, ksize=[1,3,3,1], strides=[1,1,1,1],
                                padding='SAME',name='pooling2')
+#         走一个max_pool 出来 104*104*16 步长为1
         print('pool2: ',pool2.shape)
         
+# There are 11309 cats
+# There are 11238 dogs
+# conv1:  (64, 208, 208, 16)
+# norm1:  (64, 104, 104, 16)
+# conv2:  (64, 104, 104, 16)
+# pool2:  (64, 104, 104, 16)
+# local3:  (64, 128)
+# local4:  (64, 128)
         
-    #local3
+    #local3 全链接层 128个神经元
     with tf.variable_scope('local3') as scope:
         reshape = tf.reshape(pool2, shape=[batch_size, -1])
-        dim = reshape.get_shape()[1].value
+        dim = reshape.get_shape()[1].value  #dim 64
         weights = tf.get_variable('weights',
                                   shape=[dim,128],
                                   dtype=tf.float32,
@@ -79,7 +91,7 @@ def inference(images, batch_size, n_classes):
         local3 = tf.nn.relu(tf.matmul(reshape, weights) + biases, name=scope.name)
         print('local3: ',local3.shape)
 
-    #local4
+    #local4 全链接层
     with tf.variable_scope('local4') as scope:
         weights = tf.get_variable('weights',
                                   shape=[128,128],
@@ -90,6 +102,7 @@ def inference(images, batch_size, n_classes):
                                  dtype=tf.float32,
                                  initializer=tf.constant_initializer(0.1))
         local4 = tf.nn.relu(tf.matmul(local3, weights) + biases, name='local4')
+        dropout3 = tf.nn.dropout(local4, 0.6)
         print('local4: ',local4.shape)
 
 
@@ -103,11 +116,12 @@ def inference(images, batch_size, n_classes):
                                  shape=[n_classes],
                                  dtype=tf.float32,
                                  initializer=tf.constant_initializer(0.1))
-        softmax_linear = tf.add(tf.matmul(local4, weights), biases, name='softmax_linear')
+        softmax_linear = tf.add(tf.matmul(dropout3, weights), biases, name='softmax_linear')
 
     return softmax_linear
 
 
+# 损失函数
 def losses(logits, labels):
     """
     Compute loss from logits and labels
@@ -125,6 +139,7 @@ def losses(logits, labels):
     return loss
 
 
+# 梯度下降 使得loss最小化
 def trainning(loss, learning_rate):
     """
     Training ops, the Op returned by this function is what must be passed to
@@ -141,6 +156,7 @@ def trainning(loss, learning_rate):
     return train_op
 
 
+# 计算accuracy
 def evaluation(logits, labels):
     """
     Evaluate the quality of the logits at predicting the label.
