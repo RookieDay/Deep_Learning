@@ -6,7 +6,7 @@ import input_data
 import model
 
 # you need to change the directories to yours.
-train_dir = './PetImages/train/'
+train_dir = './PetImages/train_convert/'
 test_dir = './PetImages/test/'
 train_logs_dir = './logs/train/'
 val_logs_dir = './logs/val'
@@ -38,7 +38,7 @@ def training():
                                                   CAPACITY)
 
     #scale the float to -2.5 to 2.5
-    train_batch = (1/(2*2.25)) * train_batch + 0.5
+    #train_batch = (1/(2*2.25)) * train_batch + 0.5
 
     logits = model.inference(train_batch, BATCH_SIZE, N_CLASSES)
     loss = model.losses(logits, train_label_batch)
