@@ -35,7 +35,7 @@ def inference(images, batch_size, n_classes):
                                padding='SAME', name='pooling1')
         norm1 = tf.nn.lrn(pool1, depth_radius=4, bias=1.0, alpha=0.001/9.0,
                           beta=0.75,name='norm1')
-#         走一个max_pool 出来 108*108*16  strides为2
+#         走一个max_pool 出来 104*104*16  strides为2
         print('norm1: ',norm1.shape)  
         
         
@@ -79,7 +79,9 @@ def inference(images, batch_size, n_classes):
     #local3 全链接层 128个神经元
     with tf.variable_scope('local3') as scope:
         reshape = tf.reshape(pool2, shape=[batch_size, -1])
+        print('reshape:',reshape)
         dim = reshape.get_shape()[1].value  #dim 64
+        print('dim:',dim)
         weights = tf.get_variable('weights',
                                   shape=[dim,128],
                                   dtype=tf.float32,

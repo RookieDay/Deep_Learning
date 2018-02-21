@@ -86,7 +86,7 @@ def get_batch(image, label, image_W, image_H, batch_size, capacity):
     image = tf.image.resize_image_with_crop_or_pad(image, image_W, image_H)
 
     # if you want to test the generated batches of images, you might want to comment the following line.
-    image = tf.image.per_image_standardization(image)
+ #   image = tf.image.per_image_standardization(image)
 
 #     多线程并行读入样本 从队列中读取数据 capacity 代表一次性读取多少  batch_size
     image_batch, label_batch = tf.train.batch([image, label],
