@@ -162,5 +162,5 @@ def test_one_image():
 
 
 if __name__ == '__main__':
-    training()
-    #test_one_image()
+#     training()
+    test_one_image()
